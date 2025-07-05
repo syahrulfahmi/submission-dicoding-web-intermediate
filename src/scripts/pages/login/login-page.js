@@ -1,77 +1,72 @@
-import { LoginModel } from './login-model.js';
-import { LoginPagePresenter } from './login-presenter.js';
-import loginPageStyle from './loginPageStyle.js';
+import { navigateTo } from '../../utils/index.js'
+import { LoginModel } from './login-model.js'
+import { LoginPagePresenter } from './login-presenter.js'
 
 export default class LoginPage {
-  async render() {
-    return `
+	async render() {
+		return `
       <div class="login-container">
-        <h2>Masuk</h2>
-        <form id="login-form">
-          <div class="form-control">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="Email" required />
+        <div class="login-box">
+          <h2>Masuk</h2>
+          <form id="login-form">
+            <div class="form-control">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" placeholder="Email" required />
+            </div>
+            <div class="form-control>
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" placeholder="Kata Sandi" autocomplete="off" required />
+            </div>
+            <button id="loadingBtn" class="btn width-100">
+              <span class="spinner hidden"></span>
+              <span class="btn-text">Masuk</span>
+            </button>
+          </form>
+          <div class="register-link">
+            Belum punya akun? <a href="#/register">Daftar</a>
           </div>
-          <div class="form-control>
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Kata Sandi" required />
-          </div>
-          <button type="submit">Masuk</button>
-        </form>
-        <div class="register-link">
-          Belum punya akun? <a href="#/register">Daftar</a>
         </div>
       </div>
-    `;
-  }
+    `
+	}
 
-  updateStyle() {
-    if ('adoptedStyleSheets' in document) {
-      document.adoptedStyleSheets = [
-        ...document.adoptedStyleSheets,
-        loginPageStyle,
-      ];
-    } else {
-      const style = document.createElement('style');
-      style.textContent = loginPageStyle.cssRules
-        ? Array.from(loginPageStyle.cssRules)
-            .map((rule) => rule.cssText)
-            .join('\n')
-        : '';
-      document.head.appendChild(style);
-    }
-  }
+	async afterRender() {
+		const model = new LoginModel()
+		const presenter = new LoginPagePresenter(model, this)
 
-  async afterRender() {
-    this.updateStyle();
+		const loginForm = document.querySelector('form')
 
-    const model = new LoginModel();
-    const presenter = new LoginPagePresenter(model, this);
+		loginForm.addEventListener('submit', async (event) => {
+			const email = document.getElementById('email').value
+			const password = document.getElementById('password').value
 
-    const loginForm = document.querySelector('form');
+			event.preventDefault()
+			await presenter.loginUser(email, password)
+		})
+	}
 
-    loginForm.addEventListener('submit', async (event) => {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+	renderLoginSuccess(user) {
+		navigateTo('/')
+	}
 
-      event.preventDefault();
-      console.log(email, password);
-      await presenter.loginUser(email, password);
-    });
-  }
+	renderLoginError(message) {
+		alert(message)
+	}
 
-  showLoading() {
-    // const container = document.getElementById('container');
-    // container.innerText = 'Memproses login...';
-  }
+	showLoading(isLoading = true) {
+		const button = document.getElementById('loadingBtn')
+		const btnText = button.querySelector('.btn-text')
+		const spinner = button.querySelector('.spinner')
 
-  renderLoginSuccess(user) {
-    // const container = document.getElementById('container');
-    // container.innerText = `Selamat datang, ${user.name}!`;
-  }
+		if (isLoading) {
+			button.disabled = true
+			btnText.textContent = 'Loading...'
+			spinner.classList.remove('hidden')
+			return
+		}
 
-  renderLoginError() {
-    // const container = document.getElementById('container');
-    // container.innerText = 'Login gagal. Cek kembali username dan password.';
-  }
+		btnText.textContent = 'Masuk'
+		spinner.classList.add('hidden')
+		button.disabled = false
+	}
 }
